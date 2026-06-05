@@ -1,0 +1,12 @@
+{
+  "dashboardUrl": "https://painel.airlockerbrasil.com.br/dashboard",
+  "apiBaseUrl": "https://painel.airlockerbrasil.com.br/api",
+  "pollIntervalSeconds": 10,
+  "timeoutMs": 7000,
+  "rules": {
+    "dashboardConsecutiveFailuresToCritical": 2,
+    "lockerOfflineSeverity": "critical",
+    "pendingDeliveriesWarningAt": 10,
+    "doorOccupancyWarningAt": 0.9
+  }
+}
