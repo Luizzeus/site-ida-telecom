@@ -1,0 +1,54 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Install SSH Client and Rsync
+        run: |
+          sudo apt-get update && sudo apt-get install -y openssh-client rsync
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          
+          # Add the jump host key to known_hosts
+          ssh-keyscan -H 201.130.81.116 >> ~/.ssh/known_hosts
+
+          # Setup the SSH configuration with ProxyJump
+          cat <<EOF >> ~/.ssh/config
+          Host jump
+            HostName 201.130.81.116
+            User luiz-rocha
+            IdentityFile ~/.ssh/id_ed25519
+            StrictHostKeyChecking no
+
+          Host backend
+            HostName 172.16.4.9
+            User luiz-rocha
+            ProxyJump jump
+            IdentityFile ~/.ssh/id_ed25519
+            StrictHostKeyChecking no
+          EOF
+
+      - name: Deploy files with Rsync
+        run: |
+          rsync -avz --delete \
+            --rsync-path="sudo rsync" \
+            --exclude=".git*" \
+            --exclude="dist/" \
+            --exclude="*.zip" \
+            --exclude="node_modules/" \
+            --exclude="server.mjs" \
+            --exclude="README.md" \
+            ./ backend:/sites/idatele.com.br/www/
